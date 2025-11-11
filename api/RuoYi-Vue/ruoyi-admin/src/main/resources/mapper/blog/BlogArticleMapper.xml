@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.blog.mapper.BlogArticleMapper">
+    
+    <resultMap type="BlogArticle" id="BlogArticleResult">
+        <result property="articleId"    column="article_id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="categoryId"    column="category_id"    />
+        <result property="title"    column="title"    />
+        <result property="summary"    column="summary"    />
+        <result property="content"    column="content"    />
+        <result property="coverImageUrl"    column="cover_image_url"    />
+        <result property="status"    column="status"    />
+        <result property="allowComment"    column="allow_comment"    />
+        <result property="viewCount"    column="view_count"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="categoryName"    column="category_name"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectBlogArticleVo">
+        select ba.article_id, ba.user_id, ba.category_id, ba.title, ba.summary, ba.content, ba.cover_image_url, ba.status, ba.allow_comment, ba.view_count, ba.del_flag, bc.name as category_name, ba.create_by, ba.create_time, ba.update_by, ba.update_time, ba.remark 
+        from blog_article ba
+        LEFT JOIN blog_category bc ON ba.category_id = bc.category_id
+    </sql>
+
+    <select id="selectBlogArticleList" parameterType="BlogArticle" resultMap="BlogArticleResult">
+        <include refid="selectBlogArticleVo"/>
+        <where>  
+            <choose>
+                <when test="delFlag != null  and delFlag != ''">
+                and ba.del_flag = #{delFlag}
+                </when>
+                <otherwise>
+                and ba.del_flag = '0'
+                </otherwise>
+            </choose>
+            <if test="userId != null "> and ba.user_id = #{userId}</if>
+            <if test="categoryId != null "> and ba.category_id = #{categoryId}</if>
+            <if test="title != null  and title != ''"> and (ba.title like concat('%', #{title}, '%') or ba.summary like concat('%', #{title}, '%') or ba.content like concat('%', #{title}, '%'))</if>
+            <if test="summary != null  and summary != ''"> and ba.summary like concat('%', #{summary}, '%')</if>
+            <if test="content != null  and content != ''"> and ba.content like concat('%', #{content}, '%')</if>
+            <if test="coverImageUrl != null  and coverImageUrl != ''"> and ba.cover_image_url = #{coverImageUrl}</if>
+            <if test="status != null  and status != ''"> and ba.status = #{status}</if>
+            <if test="allowComment != null  and allowComment != ''"> and ba.allow_comment = #{allowComment}</if>
+            <if test="viewCount != null "> and ba.view_count = #{viewCount}</if>
+            <if test="params.tagId != null"> and exists (select 1 from blog_article_tag bat where bat.article_id = ba.article_id and bat.tag_id = #{params.tagId})</if>
+        </where>
+    </select>
+    
+    <select id="selectBlogArticleByArticleId" parameterType="Long" resultMap="BlogArticleResult">
+        <include refid="selectBlogArticleVo"/>
+        where ba.del_flag = '0' and ba.article_id = #{articleId}
+    </select>
+
+    <insert id="insertBlogArticle" parameterType="BlogArticle" useGeneratedKeys="true" keyProperty="articleId">
+        insert into blog_article
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="categoryId != null">category_id,</if>
+            <if test="title != null and title != ''">title,</if>
+            <if test="summary != null">summary,</if>
+            <if test="content != null">content,</if>
+            <if test="coverImageUrl != null">cover_image_url,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="allowComment != null and allowComment != ''">allow_comment,</if>
+            <if test="viewCount != null">view_count,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="categoryId != null">#{categoryId},</if>
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="summary != null">#{summary},</if>
+            <if test="content != null">#{content},</if>
+            <if test="coverImageUrl != null">#{coverImageUrl},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="allowComment != null and allowComment != ''">#{allowComment},</if>
+            <if test="viewCount != null">#{viewCount},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBlogArticle" parameterType="BlogArticle">
+        update blog_article
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="summary != null">summary = #{summary},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="coverImageUrl != null">cover_image_url = #{coverImageUrl},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="allowComment != null and allowComment != ''">allow_comment = #{allowComment},</if>
+            <if test="viewCount != null">view_count = #{viewCount},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where article_id = #{articleId}
+    </update>
+
+    <delete id="deleteBlogArticleByArticleId" parameterType="Long">
+        delete from blog_article where article_id = #{articleId}
+    </delete>
+
+    <delete id="deleteBlogArticleByArticleIds" parameterType="String">
+        delete from blog_article where article_id in 
+        <foreach item="articleId" collection="array" open="(" separator="," close=")">
+            #{articleId}
+        </foreach>
+    </delete>
+
+    <!-- 批量新增文章标签关联 -->
+    <insert id="batchInsertBlogArticleTag" parameterType="java.util.List">
+        insert into blog_article_tag(article_id, tag_id) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.articleId}, #{item.tagId})
+        </foreach>
+    </insert>
+
+    <!-- 删除文章标签关联 -->
+    <delete id="deleteBlogArticleTagByArticleId" parameterType="Long">
+        delete from blog_article_tag where article_id = #{articleId}
+    </delete>
+
+    <!-- 根据文章ID查询标签ID列表 -->
+    <select id="selectTagIdsByArticleId" parameterType="Long" resultType="Long">
+        select tag_id from blog_article_tag where article_id = #{articleId}
+    </select>
+</mapper>
