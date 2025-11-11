@@ -1,6 +1,7 @@
 package com.ruoyi.blog.controller;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,8 +37,8 @@ public class BlogSiteController {
         data.put("secondaryCtaLink", "/about");
         data.put("contactEmail", "hello@jianzhansite.com");
 
-        data.put("featuredCategoryIds", List.of());
-        data.put("showcaseTagIds", List.of());
+        data.put("featuredCategoryIds", Collections.emptyList());
+        data.put("showcaseTagIds", Collections.emptyList());
 
         List<Map<String, String>> timeline = new ArrayList<>();
         Map<String, String> t1 = new HashMap<>();

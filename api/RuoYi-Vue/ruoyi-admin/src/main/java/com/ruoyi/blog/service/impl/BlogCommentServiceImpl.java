@@ -16,8 +16,6 @@ import com.ruoyi.common.exception.user.CaptchaExpireException;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.service.ISysConfigService;
-import org.owasp.html.PolicyFactory;
-import org.owasp.html.HtmlPolicyBuilder;
 import com.ruoyi.common.exception.ServiceException;
 
 /**
@@ -38,12 +36,7 @@ public class BlogCommentServiceImpl implements IBlogCommentService
     @Autowired
     private ISysConfigService configService;
 
-    /**
-     * 评论内容 HTML 清洗策略，仅允许 strong、em、ul、li、p、br 标签。
-     */
-    private static final PolicyFactory COMMENT_HTML_POLICY = new HtmlPolicyBuilder()
-            .allowElements("strong", "em", "ul", "li", "p", "br")
-            .toFactory();
+    // 已按你的要求移除后端清洗逻辑，仅保留长度校验与验证码
 
     /**
      * 评论纯文本最大长度
@@ -113,15 +106,13 @@ public class BlogCommentServiceImpl implements IBlogCommentService
 
         blogComment.setCode(null);
         blogComment.setUuid(null);
-        // 后端安全清洗评论 HTML 内容
-        String content = StringUtils.nvl(blogComment.getContent(), "");
-        String sanitized = COMMENT_HTML_POLICY.sanitize(content);
-        // 纯文本长度校验
-        String textOnly = sanitized.replaceAll("<[^>]+>", " ").replace("&nbsp;", " ").trim();
+        // 仅进行长度校验，不做后端 HTML 清洗
+        String content = StringUtils.nvl(blogComment.getContent(), "").trim();
+        String textOnly = content;
         if (textOnly.length() > COMMENT_TEXT_MAX_LEN) {
             throw new ServiceException("评论内容过长，最多" + COMMENT_TEXT_MAX_LEN + "字");
         }
-        blogComment.setContent(sanitized);
+        blogComment.setContent(content);
         return blogCommentMapper.insertBlogComment(blogComment);
     }
 
@@ -155,14 +146,13 @@ public class BlogCommentServiceImpl implements IBlogCommentService
     public int updateBlogComment(BlogComment blogComment)
     {
         blogComment.setUpdateTime(DateUtils.getNowDate());
-        // 更新时同样进行 HTML 清洗
-        String content = StringUtils.nvl(blogComment.getContent(), "");
-        String sanitized = COMMENT_HTML_POLICY.sanitize(content);
-        String textOnly = sanitized.replaceAll("<[^>]+>", " ").replace("&nbsp;", " ").trim();
+        // 更新时同样仅进行长度校验
+        String content = StringUtils.nvl(blogComment.getContent(), "").trim();
+        String textOnly = content;
         if (textOnly.length() > COMMENT_TEXT_MAX_LEN) {
             throw new ServiceException("评论内容过长，最多" + COMMENT_TEXT_MAX_LEN + "字");
         }
-        blogComment.setContent(sanitized);
+        blogComment.setContent(content);
         return blogCommentMapper.updateBlogComment(blogComment);
     }
 
