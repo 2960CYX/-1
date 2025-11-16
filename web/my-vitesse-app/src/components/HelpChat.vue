@@ -30,6 +30,7 @@ const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const messagesRef = ref<HTMLElement | null>(null)
 const panelRef = ref<HTMLElement | null>(null)
 const showNewBadge = ref(false)
+const referencePanelCollapsed = ref(false)
 
 const isDragging = ref(false)
 const dragStart = ref({ x: 0, y: 0 })
@@ -163,6 +164,10 @@ function handleToggle() {
   }
 }
 
+function toggleReferencePanel() {
+  referencePanelCollapsed.value = !referencePanelCollapsed.value
+}
+
 function focusInput() {
   if (!textareaRef.value)
     return
@@ -259,6 +264,14 @@ watch(
   },
 )
 
+watch(
+  () => referenceArticles.value.length,
+  (length) => {
+    if (length === 0)
+      referencePanelCollapsed.value = false
+  },
+)
+
 watch(isPanelOpen, (value) => {
   if (value)
     nextTick(() => setTimeout(autoResizeTextarea, 0))
@@ -335,32 +348,41 @@ onBeforeUnmount(() => {
             </button>
           </div>
 
-          <section class="chat-reference">
+          <section class="chat-reference" :class="referencePanelCollapsed ? 'chat-reference-collapsed' : ''">
             <header class="chat-reference-header">
-              <p>参考资料（最多 {{ chatStore.maxContextArticles }} 条）</p>
+              <div>
+                <p>参考资料（最多 {{ chatStore.maxContextArticles }} 条）</p>
+                <p v-if="referenceArticles.length" class="chat-reference-count">已添加 {{ referenceArticles.length }} 条引用</p>
+              </div>
+              <button type="button" class="chat-reference-toggle" @click="toggleReferencePanel">
+                <span>{{ referencePanelCollapsed ? '展开' : '收起' }}</span>
+                <div class="i-carbon-chevron-down text-sm transition-transform" :class="referencePanelCollapsed ? '' : 'rotate-180'" />
+              </button>
             </header>
-            <ul v-if="referenceArticles.length" class="chat-reference-list">
-              <li v-for="article in referenceArticles" :key="article.articleId" class="chat-reference-item">
-                <div>
-                  <p class="chat-reference-title">
-                    {{ article.title }}
-                  </p>
-                  <p class="chat-reference-source">
-                    {{ article.source }}
-                  </p>
-                </div>
-                <button
-                  class="chat-reference-remove"
-                  type="button"
-                  @click="handleRemoveContext(article.articleId)"
-                >
-                  移除
-                </button>
-              </li>
-            </ul>
-            <p v-else class="chat-reference-empty">
-              可在文章卡片点击“AI 引用此文”快速注入上下文
-            </p>
+            <div v-if="!referencePanelCollapsed" class="chat-reference-body">
+              <ul v-if="referenceArticles.length" class="chat-reference-list">
+                <li v-for="article in referenceArticles" :key="article.articleId" class="chat-reference-item">
+                  <div>
+                    <p class="chat-reference-title">
+                      {{ article.title }}
+                    </p>
+                    <p class="chat-reference-source">
+                      {{ article.source }}
+                    </p>
+                  </div>
+                  <button
+                    class="chat-reference-remove"
+                    type="button"
+                    @click="handleRemoveContext(article.articleId)"
+                  >
+                    移除
+                  </button>
+                </li>
+              </ul>
+              <p v-else class="chat-reference-empty">
+                可在文章卡片点击“AI 引用此文”快速注入上下文
+              </p>
+            </div>
           </section>
 
           <section ref="messagesRef" class="chat-messages">
@@ -541,9 +563,8 @@ onBeforeUnmount(() => {
 .chat-panel {
   position: fixed;
   z-index: 95;
-  width: 320px;
-  max-width: calc(100vw - 2rem);
-  height: 420px;
+  width: min(360px, calc(100vw - 2rem));
+  height: clamp(420px, 65vh, 600px);
   max-height: calc(100vh - 2rem);
   background: var(--help-chat-panel-bg);
   color: var(--help-chat-text-primary);
@@ -646,16 +667,59 @@ onBeforeUnmount(() => {
 }
 
 .chat-reference-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
   font-size: 0.78rem;
   font-weight: 500;
   margin-bottom: 0.35rem;
   color: var(--help-chat-text-muted);
 }
 
+.chat-reference-count {
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: normal;
+  color: var(--help-chat-text-subtle);
+}
+
+.chat-reference-toggle {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--help-chat-text-muted);
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.chat-reference-toggle:hover {
+  border-color: var(--help-chat-reference-border);
+  color: var(--help-chat-text-primary);
+}
+
+.chat-reference-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .chat-reference-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  max-height: 140px;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+}
+
+.chat-reference-collapsed {
+  padding-bottom: 0.35rem;
 }
 
 .chat-reference-item {
