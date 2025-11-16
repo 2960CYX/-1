@@ -1,4 +1,5 @@
 import type { ChatCompletionPayload, ChatCompletionResponse } from '~/types/chat'
+import httpClient from '~/utils/request'
 
 type ChatRequestBody = ChatCompletionPayload & {
   model?: string
@@ -10,10 +11,14 @@ export interface ChatCompletionResult {
   raw: ChatCompletionResponse | null
 }
 
-const DEFAULT_ENDPOINT = '/api/chat/completion'
+const DEFAULT_ENDPOINT = '/chat/completion'
 const resolvedApiUrl = (import.meta.env.VITE_CHAT_API_URL || '').trim()
 const resolvedApiKey = (import.meta.env.VITE_CHAT_API_KEY || '').trim()
 const resolvedModel = (import.meta.env.VITE_CHAT_MODEL || '').trim()
+
+function isAbsolute(url: string) {
+  return /^https?:\/\//.test(url)
+}
 
 function resolveEndpoint() {
   return resolvedApiUrl || DEFAULT_ENDPOINT
@@ -57,35 +62,23 @@ export async function createChatCompletion(
     stream: payload.stream ?? false,
   }
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  }
-
+  const url = resolveEndpoint()
+  const headers: Record<string, string> = {}
   if (resolvedApiKey)
     headers.Authorization = `Bearer ${resolvedApiKey}`
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
+  const config = {
     headers,
-    body: JSON.stringify(requestBody),
     signal,
-  })
-
-  if (!response.ok) {
-    const message = await response.text().catch(() => null)
-    throw new Error(message || `Chat API 请求失败（${response.status}）`)
   }
 
-  let parsed: ChatCompletionResponse | null = null
-  try {
-    parsed = await response.json()
-  }
-  catch (error) {
-    console.warn('[Chat] 无法解析响应体', error)
-  }
+  const resp = isAbsolute(url)
+    ? await httpClient.post<ChatCompletionResponse>(url, requestBody, config)
+    : await httpClient.post<ChatCompletionResponse>(url, requestBody, config)
 
+  const data = resp.data as unknown as ChatCompletionResponse | null
   return {
-    content: extractContent(parsed).trim(),
-    raw: parsed,
+    content: extractContent(data).trim(),
+    raw: data,
   }
 }

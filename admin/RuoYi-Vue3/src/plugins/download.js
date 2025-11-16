@@ -1,11 +1,11 @@
-﻿import axios from 'axios'
+import axios from 'axios'
 import { ElLoading, ElMessage } from 'element-plus'
 import { saveAs } from 'file-saver'
 import { getToken } from '@/utils/auth'
 import errorCode from '@/utils/errorCode'
 import { blobValidate } from '@/utils/ruoyi'
 
-const baseURL = import.meta.env.VITE_APP_BASE_API
+const baseURL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_APP_BASE_API
 let downloadLoadingInstance
 
 export default {
