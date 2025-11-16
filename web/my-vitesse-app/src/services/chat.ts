@@ -70,6 +70,7 @@ export async function createChatCompletion(
   const config = {
     headers,
     signal,
+    timeout: 60000, // 设置 60 秒超时
   }
 
   const resp = isAbsolute(url)
